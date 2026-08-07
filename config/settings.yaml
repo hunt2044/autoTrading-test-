@@ -1,0 +1,43 @@
+# ETH 4H MVP Trading System Configuration
+# Copy to .env for secrets (API keys)
+
+mode: "backtest"  # backtest | live
+symbol: "ETHUSDT"
+interval: "4h"
+initial_capital: 10000.0  # USDT
+
+# Binance API Configuration
+binance:
+  mainnet_base_url: "https://api.binance.com/api"
+  demo_base_url: "https://demo-api.binance.com/api"
+  api_key: ""  # Set via BINANCE_DEMO_API_KEY env var
+  api_secret: ""  # Set via BINANCE_DEMO_API_SECRET env var
+  recv_window: 5000
+
+# Strategy Parameters
+ema_short: 20
+ema_long: 50
+atr_period: 14
+atr_multiplier: 2.0
+risk_per_trade_pct: 0.01
+
+# Backtest Configuration
+backtest:
+  years: 3
+  start_date: "2022-01-01"
+  end_date: ""
+  fee_rate: 0.001  # 0.1% taker fee
+  slippage_bps: 5  # 5 basis points
+
+# Data Storage
+data_dir: "./data"
+storage_format: "parquet"  # parquet | csv | sqlite
+
+# Live Trading
+live:
+  alert_missing_candle_hours: 6
+  reconciliation_tolerance: 0.0001
+
+# Monitoring
+log_level: "INFO"
+log_file: "./logs/trading.log"

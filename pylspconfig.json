@@ -1,0 +1,51 @@
+{
+  "pylsp": {
+    "configurationSources": ["pycodestyle"],
+    "plugins": {
+      "pycodestyle": {
+        "enabled": false
+      },
+      "pyflakes": {
+        "enabled": false
+      },
+      "mccabe": {
+        "enabled": false
+      },
+      "ruff": {
+        "enabled": true,
+        "formatEnabled": true,
+        "extendSelect": ["I", "UP", "B", "C4", "SIM", "T20"],
+        "ignore": ["S101", "S311"],
+        "lineLength": 100
+      },
+      "jedi_completion": {
+        "enabled": true,
+        "include_params": true
+      },
+      "jedi_definition": {
+        "enabled": true,
+        "follow_imports": true
+      },
+      "jedi_references": {
+        "enabled": true
+      },
+      "jedi_signature_help": {
+        "enabled": true
+      },
+      "jedi_symbols": {
+        "enabled": true,
+        "all_scopes": true
+      },
+      "pylsp_mypy": {
+        "enabled": false,
+        "live_mode": false
+      },
+      "autopep8": {
+        "enabled": false
+      },
+      "yapf": {
+        "enabled": false
+      }
+    }
+  }
+}
