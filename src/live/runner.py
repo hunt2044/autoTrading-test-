@@ -11,6 +11,7 @@ from src.data import (
     BinanceClient,
     CandleStore,
     DataProvider,
+    DataSource,
     create_data_provider,
     create_demo_client,
     create_store,
@@ -25,6 +26,8 @@ logger = get_logger(__name__)
 
 
 class LiveRunner:
+    WARMUP_CANDLES = 60
+
     def __init__(self):
         self.settings = get_settings()
         self._stop_event = Event()
@@ -68,7 +71,49 @@ class LiveRunner:
         self.signal_gen = EmaCrossoverSignal()
         self.risk_manager = RiskManager()
 
+        self._warmup_indicators()
+
         self._initialized = True
+
+    def _warmup_indicators(self) -> None:
+        logger.info("Warming up indicators with {} historical candles...", self.WARMUP_CANDLES)
+        try:
+            end_time = int(datetime.now(UTC).timestamp() * 1000)
+            start_time = end_time - (self.WARMUP_CANDLES * 4 * 60 * 60 * 1000)
+            
+            candles = self.provider.fetch_historical(
+                self.settings.symbol,
+                self.settings.interval,
+                start_time=start_time,
+                end_time=end_time,
+                limit=1000,
+            )
+            
+            if not candles:
+                logger.warning("No historical candles fetched for warm-up")
+                return
+            
+            candles.sort(key=lambda c: c.timestamp)
+            
+            last_indicators: Indicators | None = None
+            for candle in candles:
+                last_indicators = self.indicators.process_candle(candle)
+            
+            self.last_candle_time = candles[-1].timestamp
+            
+            if last_indicators:
+                logger.info(
+                    "Warmed up indicators with {} candles: EMA20={:.2f}, EMA50={:.2f}, ATR={:.2f}",
+                    len(candles),
+                    last_indicators.ema_short,
+                    last_indicators.ema_long,
+                    last_indicators.atr,
+                )
+            else:
+                logger.info("Warmed up indicators with {} candles", len(candles))
+                
+        except Exception as e:
+            logger.warning("Indicator warm-up failed: {}", e)
 
     def run(self) -> None:
         self.initialize()

@@ -11,6 +11,7 @@ from src.data.provider import (
     LiveDataProvider,
     create_data_provider,
 )
+from src.core.enums import DataSource
 
 __all__ = [
     "BinanceClient",
@@ -23,4 +24,5 @@ __all__ = [
     "BacktestDataProvider",
     "LiveDataProvider",
     "create_data_provider",
+    "DataSource",
 ]
