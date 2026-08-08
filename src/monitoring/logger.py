@@ -2,9 +2,39 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import httpx
 from loguru import logger
 
 from config.schema import get_settings
+
+
+def _telegram_sink(message) -> None:
+    """Loguru sink that sends WARNING+ messages to Telegram."""
+    record = message.record
+    if record["level"].no < 30:  # WARNING = 30
+        return
+
+    settings = get_settings()
+    bot_token = settings.telegram.bot_token
+    chat_id = settings.telegram.chat_id
+
+    if not bot_token or not chat_id:
+        return
+
+    level = record["level"].name
+    name = record["name"]
+    text = record["message"]
+
+    formatted = f"[{level}] {name}: {text}"
+
+    try:
+        with httpx.Client(timeout=5.0) as client:
+            client.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                data={"chat_id": chat_id, "text": formatted},
+            )
+    except Exception as e:
+        logger.opt(depth=1).debug("Telegram notification failed: {}", e)
 
 
 def setup_logging() -> None:
@@ -44,6 +74,9 @@ def setup_logging() -> None:
         retention="30 days",
         compression="zip",
     )
+
+    if settings.telegram.bot_token and settings.telegram.chat_id:
+        logger.add(_telegram_sink, level="WARNING", format="{message}")
 
 
 def get_logger(name: str):

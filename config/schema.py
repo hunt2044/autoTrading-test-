@@ -33,6 +33,13 @@ class LiveConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="LIVE_")
 
 
+class TelegramConfig(BaseSettings):
+    bot_token: str | None = None
+    chat_id: str | None = None
+
+    model_config = SettingsConfigDict(env_prefix="TELEGRAM_")
+
+
 class Settings(BaseSettings):
     mode: Literal["backtest", "live"] = "backtest"
     symbol: str = "ETHUSDT"
@@ -42,6 +49,7 @@ class Settings(BaseSettings):
     binance: BinanceConfig = Field(default_factory=BinanceConfig)
     backtest: BacktestConfig = Field(default_factory=BacktestConfig)
     live: LiveConfig = Field(default_factory=LiveConfig)
+    telegram: TelegramConfig = Field(default_factory=TelegramConfig)
 
     ema_short: int = 20
     ema_long: int = 50
