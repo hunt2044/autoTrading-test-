@@ -1,3 +1,4 @@
+import signal as signal_module
 import time
 from contextlib import suppress
 from datetime import UTC, datetime, timedelta
@@ -118,6 +119,12 @@ class LiveRunner:
     def run(self) -> None:
         self.initialize()
 
+        def _handle_sigterm(signum, frame):
+            logger.info("SIGTERM received, shutting down gracefully...")
+            self.stop()
+
+        signal_module.signal(signal_module.SIGTERM, _handle_sigterm)
+
         logger.info("Starting live paper trading...")
         logger.info("Symbol: {}", self.settings.symbol)
         logger.info("Interval: {}", self.settings.interval)
@@ -162,8 +169,8 @@ class LiveRunner:
                 next_candle_close.isoformat(),
                 sleep_seconds,
             )
-            time.sleep(min(sleep_seconds, 3600))
-            if self._stop_event.is_set():
+            wait_timeout = min(sleep_seconds, 3600)
+            if self._stop_event.wait(timeout=wait_timeout):
                 return
 
         candles = self.provider.fetch_latest(
