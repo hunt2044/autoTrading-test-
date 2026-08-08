@@ -109,6 +109,7 @@ class Reconciler:
                 remote_balances = self._parse_balances(remote_account)
 
                 local_account.available_balance = remote_balances.get("USDT", Decimal("0"))
+                local_account.total_equity = local_account.available_balance
 
                 for symbol, local_pos in local_account.positions.items():
                     asset = symbol.replace("USDT", "")

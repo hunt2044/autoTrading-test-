@@ -285,14 +285,15 @@ class LiveRunner:
 
         if result.success:
             entry = self.position.entry_price or Decimal("0")
-            pnl = (exit_price - entry) * self.position.quantity
+            qty = self.position.quantity
+            pnl = (exit_price - entry) * qty
             logger.info("Position closed: PnL={}", pnl)
+            self.account.available_balance += qty * exit_price
             self.position.side = PositionSide.FLAT
             self.position.quantity = Decimal("0")
             self.position.entry_price = None
             self.position.stop_loss = None
             self.position.entry_time = None
-            self.account.available_balance += self.position.quantity * exit_price
         else:
             logger.error("Exit order failed: {}", result.error)
 
@@ -303,6 +304,8 @@ class LiveRunner:
                 candle.close - (self.position.entry_price or Decimal("0"))
             ) * self.position.quantity
             equity += unrealized
+
+        self.account.total_equity = equity
 
         logger.info(
             "Equity: {:.2f} | Position: {} {} | EMA20: {} | EMA50: {} | ATR: {}",
