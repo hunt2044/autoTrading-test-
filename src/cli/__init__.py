@@ -1,3 +1,1 @@
-from src.cli.main import app
-
-__all__ = ["app"]
+# CLI package - use src.cli.main directly

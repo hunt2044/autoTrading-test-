@@ -50,10 +50,10 @@ poetry install
 
 ```bash
 # Fetch 3 years of 4h candles
-python -m src.cli.main fetch-history --years 3
+python main.py fetch-history --years 3
 
 # Fetch with custom date range
-python -m src.cli.main fetch-history --years 1
+python main.py fetch-history --years 1
 ```
 
 Data is stored in `data/` as Parquet files (separate files for backtest vs live sources).
@@ -62,13 +62,13 @@ Data is stored in `data/` as Parquet files (separate files for backtest vs live 
 
 ```bash
 # Default: last 3 years
-python -m src.cli.main backtest
+python main.py backtest
 
 # Custom date range
-python -m src.cli.main backtest --start 2023-01-01 --end 2024-01-01
+python main.py backtest --start 2023-01-01 --end 2024-01-01
 
 # Custom output directory
-python -m src.cli.main backtest --output ./my_results
+python main.py backtest --output ./my_results
 ```
 
 Outputs:
@@ -79,7 +79,7 @@ Outputs:
 ### Live Paper Trading
 
 ```bash
-python -m src.cli.main live
+python main.py live
 ```
 
 The runner:
@@ -95,10 +95,10 @@ Press `Ctrl+C` for graceful shutdown (cancels open orders).
 
 ```bash
 # Validate config file
-python -m src.cli.main validate-config
+python main.py validate-config
 
 # Show current effective configuration
-python -m src.cli.main show-config
+python main.py show-config
 ```
 
 ## Project Structure

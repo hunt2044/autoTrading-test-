@@ -17,6 +17,9 @@ dependencies = [
     "numpy>=1.26",
 ]
 
+[project.scripts]
+eth-4h-mvp = "src.cli.main:app"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.2",

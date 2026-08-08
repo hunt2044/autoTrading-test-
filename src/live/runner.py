@@ -74,9 +74,9 @@ class LiveRunner:
         self.initialize()
 
         logger.info("Starting live paper trading...")
-        logger.info("Symbol: %s", self.settings.symbol)
-        logger.info("Interval: %s", self.settings.interval)
-        logger.info("Initial Capital: %s USDT", self.settings.initial_capital)
+        logger.info("Symbol: {}", self.settings.symbol)
+        logger.info("Interval: {}", self.settings.interval)
+        logger.info("Initial Capital: {} USDT", self.settings.initial_capital)
 
         self._sync_initial_state()
 
@@ -87,7 +87,7 @@ class LiveRunner:
                 logger.info("Shutdown signal received")
                 break
             except Exception as e:
-                logger.error("Error in main loop: %s", e)
+                logger.error("Error in main loop: {}", e)
                 time.sleep(60)
 
         self.shutdown()
@@ -98,13 +98,13 @@ class LiveRunner:
             self.account = self.reconciler.sync_account(self.account)
             self.position = self.account.get_position(self.settings.symbol)
             logger.info(
-                "Synced - Balance: %s, Position: %s %s",
+                "Synced - Balance: {}, Position: {} {}",
                 self.account.available_balance,
                 self.position.side,
                 self.position.quantity,
             )
         except Exception as e:
-            logger.warning("Failed to sync initial state: %s", e)
+            logger.warning("Failed to sync initial state: {}", e)
 
     def _run_iteration(self) -> None:
         next_candle_close = self._get_next_candle_close()
@@ -113,7 +113,7 @@ class LiveRunner:
         sleep_seconds = (next_candle_close - now).total_seconds()
         if sleep_seconds > 0:
             logger.info(
-                "Next candle closes at %s, sleeping %.0fs",
+                "Next candle closes at {}, sleeping {:.0f}s",
                 next_candle_close.isoformat(),
                 sleep_seconds,
             )
@@ -131,7 +131,7 @@ class LiveRunner:
                 >= self.settings.live.alert_missing_candle_hours / 4
             ):
                 logger.warning(
-                    "ALERT: No new candle received for %s hours",
+                    "ALERT: No new candle received for {} hours",
                     self.missed_candle_count * 4,
                 )
             return
@@ -140,7 +140,7 @@ class LiveRunner:
         closed_candle = candles[-2] if len(candles) >= 2 else candles[-1]
 
         if self.last_candle_time and closed_candle.timestamp <= self.last_candle_time:
-            logger.debug("Candle %s already processed, skipping", closed_candle.timestamp)
+            logger.debug("Candle {} already processed, skipping", closed_candle.timestamp)
             return
 
         self.last_candle_time = closed_candle.timestamp
@@ -161,7 +161,7 @@ class LiveRunner:
 
     def _process_candle(self, candle: Candle) -> None:
         logger.info(
-            "Processing candle: %s O:%s H:%s L:%s C:%s",
+            "Processing candle: {} O:{} H:{} L:{} C:{}",
             candle.timestamp,
             candle.open,
             candle.high,
@@ -178,12 +178,12 @@ class LiveRunner:
             and candle.low <= self.position.stop_loss
         )
         if is_stop_triggered:
-            logger.warning("STOP LOSS TRIGGERED at %s", self.position.stop_loss)
+            logger.warning("STOP LOSS TRIGGERED at {}", self.position.stop_loss)
             self._execute_exit(self.position.stop_loss, candle.timestamp, "STOP_LOSS")
             return
 
         if signal and signal.action != SignalAction.HOLD:
-            logger.info("Signal: %s at %s", signal.action.value, signal.price)
+            logger.info("Signal: {} at {}", signal.action.value, signal.price)
             if signal.action == SignalAction.ENTRY_LONG:
                 self._execute_entry(signal, candle)
             elif signal.action == SignalAction.EXIT_LONG:
@@ -203,11 +203,11 @@ class LiveRunner:
                 signal.indicators,
             )
         except ValueError as e:
-            logger.error("Risk calculation failed: %s", e)
+            logger.error("Risk calculation failed: {}", e)
             return
 
         logger.info(
-            "Placing BUY order: qty=%s, stop=%s",
+            "Placing BUY order: qty={}, stop={}",
             risk_params.quantity,
             risk_params.stop_loss,
         )
@@ -223,16 +223,16 @@ class LiveRunner:
             self.position.stop_loss = risk_params.stop_loss
             self.position.entry_time = candle.timestamp
             self.account.available_balance -= risk_params.quantity * signal.price
-            logger.info("Order placed: %s, status: %s", result.order.id, result.order.status)
+            logger.info("Order placed: {}, status: {}", result.order.id, result.order.status)
         else:
-            logger.error("Order failed: %s", result.error)
+            logger.error("Order failed: {}", result.error)
 
     def _execute_exit(self, exit_price: Decimal, exit_time: datetime, reason: str) -> None:
         if self.position.side != PositionSide.LONG or self.position.quantity == 0:
             logger.warning("No position to exit")
             return
 
-        logger.info("Placing SELL order: qty=%s, reason=%s", self.position.quantity, reason)
+        logger.info("Placing SELL order: qty={}, reason={}", self.position.quantity, reason)
 
         result: OrderResult = self.order_manager.place_market_sell(
             self.settings.symbol, self.position.quantity
@@ -241,7 +241,7 @@ class LiveRunner:
         if result.success:
             entry = self.position.entry_price or Decimal("0")
             pnl = (exit_price - entry) * self.position.quantity
-            logger.info("Position closed: PnL=%s", pnl)
+            logger.info("Position closed: PnL={}", pnl)
             self.position.side = PositionSide.FLAT
             self.position.quantity = Decimal("0")
             self.position.entry_price = None
@@ -249,7 +249,7 @@ class LiveRunner:
             self.position.entry_time = None
             self.account.available_balance += self.position.quantity * exit_price
         else:
-            logger.error("Exit order failed: %s", result.error)
+            logger.error("Exit order failed: {}", result.error)
 
     def _log_status(self, candle: Candle, indicators: Indicators) -> None:
         equity = self.account.total_equity
@@ -260,7 +260,7 @@ class LiveRunner:
             equity += unrealized
 
         logger.info(
-            "Equity: %.2f | Position: %s %s | EMA20: %s | EMA50: %s | ATR: %s",
+            "Equity: {:.2f} | Position: {} {} | EMA20: {} | EMA50: {} | ATR: {}",
             equity,
             self.position.side,
             self.position.quantity,
@@ -276,7 +276,7 @@ class LiveRunner:
         if self.order_manager:
             open_orders = self.order_manager.get_open_orders(self.settings.symbol)
             for order in open_orders:
-                logger.info("Cancelling open order: %s", order.id)
+                logger.info("Cancelling open order: {}", order.id)
                 with suppress(Exception):
                     self.order_manager.cancel_order(order.id)
 
