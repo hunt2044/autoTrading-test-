@@ -216,6 +216,16 @@ Only WARNING and above are sent (INFO logs like "Processing candle..." are filte
 - Reconciliation mismatches
 - Demo Mode maintenance
 
+### Graceful Shutdown (SIGTERM)
+
+The live runner handles `SIGTERM` (sent by `systemctl stop/restart`) for graceful shutdown:
+
+- On `SIGTERM`: logs "SIGTERM received, shutting down gracefully...", cancels all open orders via `OrderManager`, closes the Binance client connection, then exits
+- Uses `threading.Event.wait()` instead of `time.sleep()` for instant wake-up on shutdown signal (no up-to-1-hour delay)
+- `Ctrl+C` (`SIGINT`) still works for manual interruption during development
+
+For systemd deployments, this ensures `systemctl restart eth-4h-mvp` performs a clean handover without leaving orphan orders.
+
 ## Development
 
 ### Code Quality
