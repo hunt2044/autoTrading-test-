@@ -147,6 +147,11 @@ class LiveRunner:
     def _sync_initial_state(self) -> None:
         logger.info("Syncing initial state with Demo Mode...")
         try:
+            result = self.reconciler.reconcile(self.account)
+            if not result.matched:
+                for disc in result.discrepancies:
+                    logger.warning("Reconciliation discrepancy: {}", disc)
+            
             self.account = self.reconciler.sync_account(self.account)
             self.position = self.account.get_position(self.settings.symbol)
             logger.info(

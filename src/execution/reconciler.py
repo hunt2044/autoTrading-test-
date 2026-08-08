@@ -3,6 +3,10 @@ from decimal import Decimal
 
 from src.core.models import Account, Position
 from src.data.binance_client import BinanceClient
+from src.monitoring.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 @dataclass(slots=True)
@@ -118,7 +122,7 @@ class Reconciler:
                         local_pos.quantity = remote_pos.quantity
                         local_pos.side = remote_pos.side
 
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning("Failed to sync account from Demo Mode: {}", e)
 
         return local_account
