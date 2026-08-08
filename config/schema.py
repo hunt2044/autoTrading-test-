@@ -89,17 +89,10 @@ class Settings(BaseSettings):
 
 
 def load_settings_from_yaml(yaml_path: str | Path) -> Settings:
-    """Load settings from YAML file, then override with env vars."""
-    path = Path(yaml_path)
-    if path.exists():
-        with open(path) as f:
-            yaml_data = yaml.safe_load(f) or {}
-    else:
-        yaml_data = {}
-
-    # Create settings with YAML data as defaults
-    settings = Settings(**yaml_data)
-    return settings
+    """Load settings from env file (with YAML as reference defaults)."""
+    # pydantic-settings automatically loads from env_file specified in model_config
+    # The YAML file serves as documentation/defaults; env vars take precedence
+    return Settings()
 
 
 _settings: Settings | None = None

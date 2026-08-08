@@ -7,7 +7,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from config.schema import Settings, get_settings, reload_settings, load_settings_from_yaml
+from config.schema import get_settings, load_settings_from_yaml, reload_settings
 from src.backtest import BacktestEngine, BacktestReporter
 from src.data import create_mainnet_client, create_store
 from src.live import LiveRunner

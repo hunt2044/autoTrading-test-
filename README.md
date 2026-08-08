@@ -34,11 +34,13 @@ poetry install
 
 2. Edit `.env` with your Binance Demo Mode API credentials:
    ```
-   BINANCE_DEMO_API_KEY=your_demo_api_key
-   BINANCE_DEMO_API_SECRET=your_demo_api_secret
+   BINANCE__API_KEY=your_demo_api_key
+   BINANCE__API_SECRET=your_demo_api_secret
    ```
 
    Get these from [demo.binance.com](https://demo.binance.com/en/my/settings/api-management) after enabling Demo Trading on your main Binance account.
+
+   **Note**: The config uses `env_nested_delimiter="__"`, so nested settings require double underscore (e.g., `BINANCE__API_KEY`, not `BINANCE_DEMO_API_KEY`).
 
 3. Adjust `config/settings.yaml` if needed (strategy params, risk, logging, etc.)
 

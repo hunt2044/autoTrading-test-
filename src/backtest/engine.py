@@ -6,7 +6,7 @@ import pandas as pd
 
 from config.schema import get_settings
 from src.core.enums import OrderSide, PositionSide, SignalAction
-from src.core.models import Account, Candle, Order, Position, Signal, Trade
+from src.core.models import Account, Candle, Position, Signal, Trade
 from src.indicators import IndicatorCalculator
 from src.risk import RiskManager
 from src.signal import EmaCrossoverSignal
@@ -21,7 +21,6 @@ class BacktestState:
     risk_manager: RiskManager
     trades: list[Trade] = field(default_factory=list)
     equity_curve: list[tuple] = field(default_factory=list)
-    current_order: Order | None = None
     pending_stop_loss: Decimal | None = None
 
 
@@ -73,7 +72,7 @@ class BacktestEngine:
         indicators = self.state.indicators.process_candle(candle)
         signal = self.state.signal_gen.generate(candle, indicators, self.state.position.side)
 
-        if self.state.current_order:
+        if self.state.position.side == PositionSide.LONG:
             self._check_stop_loss(candle)
 
         if signal and signal.action != SignalAction.HOLD:
