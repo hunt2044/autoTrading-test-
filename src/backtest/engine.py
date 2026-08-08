@@ -22,6 +22,7 @@ class BacktestState:
     trades: list[Trade] = field(default_factory=list)
     equity_curve: list[tuple] = field(default_factory=list)
     pending_stop_loss: Decimal | None = None
+    pending_atr: Decimal | None = None
 
 
 class BacktestEngine:
@@ -111,6 +112,7 @@ class BacktestEngine:
             self.state.position.stop_loss = risk_params.stop_loss
             self.state.position.entry_time = next_candle.timestamp
             self.state.pending_stop_loss = risk_params.stop_loss
+            self.state.pending_atr = signal.indicators.atr
 
             position_value = risk_params.quantity * entry_price
             commission = position_value * self.fee_rate
@@ -130,7 +132,7 @@ class BacktestEngine:
     def _check_stop_loss(self, candle: Candle) -> None:
         if self.state.pending_stop_loss and candle.low <= self.state.pending_stop_loss:
             exit_price = self.state.pending_stop_loss
-            self._close_position(exit_price, candle.timestamp, self.state.position.stop_loss)
+            self._close_position(exit_price, candle.timestamp, self.state.pending_atr)
 
     def _close_position(
         self,
@@ -172,6 +174,7 @@ class BacktestEngine:
         self.state.position.stop_loss = None
         self.state.position.entry_time = None
         self.state.pending_stop_loss = None
+        self.state.pending_atr = None
 
     def _update_equity(self, candle: Candle) -> None:
         if self.state.position.side == PositionSide.LONG and self.state.position.quantity > 0:
@@ -189,7 +192,7 @@ class BacktestEngine:
         if self.state.position.side == PositionSide.LONG and self.state.position.quantity > 0:
             last_price = self.state.position.entry_price or Decimal("0")
             self._close_position(
-            last_price, self.state.position.entry_time, self.state.position.stop_loss
+            last_price, self.state.position.entry_time, self.state.pending_atr
         )
 
     def _calculate_metrics(self) -> dict[str, float]:
