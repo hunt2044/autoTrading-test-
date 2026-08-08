@@ -192,8 +192,23 @@ storage_format: "parquet"   # parquet | csv | sqlite
 - **Console**: Colorized human-readable logs
 - **File**: `logs/trading.log` (rotated, 30-day retention)
 - **JSON**: `logs/trading.log.json` (structured for log aggregation)
+- **Telegram**: Optional WARNING+ notifications (see below)
 
 Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+### Telegram Notifications (Optional)
+
+Receive real-time WARNING/ERROR/CRITICAL alerts in Telegram:
+
+1. Create a bot via [@BotFather](https://t.me/BotFather), get the bot token
+2. Get your chat ID via [@userinfobot](https://t.me/userinfobot)
+3. Add to `.env`:
+   ```
+   TELEGRAM__BOT_TOKEN=your_bot_token
+   TELEGRAM__CHAT_ID=your_chat_id
+   ```
+
+Only WARNING and above are sent (INFO logs like "Processing candle..." are filtered out to avoid spam). Failures are logged locally at DEBUG level and never interrupt the trading loop.
 
 ### Alerts (via logs)
 - Missing candles beyond threshold
