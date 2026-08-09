@@ -2,6 +2,9 @@
 
 Automated paper trading system for ETH/USDT on 4-hour timeframe using Binance Demo Mode.
 
+> [!NOTE]
+> This is a vibe-coded project for learning purposes about CI/CD on cloud. Not recommended for production use.
+
 ## Features
 
 - **EMA Crossover Strategy**: EMA(20) / EMA(50) crossover on 4h candles
@@ -25,14 +28,19 @@ pip install -e ".[dev]"
 poetry install
 ```
 
+> [!NOTE]
+> Use `venv` when running on Linux.
+
 ### Configuration
 
 1. Copy the example environment file:
+
    ```bash
    cp .env.example .env
    ```
 
 2. Edit `.env` with your Binance Demo Mode API credentials:
+
    ```
    BINANCE__API_KEY=your_demo_api_key
    BINANCE__API_SECRET=your_demo_api_secret
@@ -72,6 +80,7 @@ python main.py backtest --output ./my_results
 ```
 
 Outputs:
+
 - `trades.csv` - All executed trades with PnL
 - `equity_curve.csv` - Equity over time
 - Console summary with metrics (Sharpe, max drawdown, win rate, profit factor)
@@ -83,6 +92,7 @@ python main.py live
 ```
 
 The runner:
+
 - Wakes up at each 4h candle close (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
 - Fetches the latest closed candle from Demo Mode
 - Generates signals, calculates position size, places orders
@@ -131,19 +141,19 @@ eth_4h_mvp/
 
 ## Strategy Details
 
-| Component | Specification |
-|-----------|---------------|
-| **Symbol** | ETH/USDT (spot) |
-| **Timeframe** | 4-hour candles |
-| **Direction** | Long only (no short, no leverage) |
-| **Entry** | EMA(20) crosses above EMA(50) on close → enter next open |
-| **Exit** | EMA(20) crosses below EMA(50) on close → exit next open |
-| **Stop Loss** | Entry − 2 × ATR(14) (fixed at entry) |
-| **Risk/Trade** | 1% of current equity |
-| **Position Size** | (0.01 × equity) / (entry − stop) |
-| **Pyramiding** | None (single position) |
-| **Fees** | 0.1% taker (configurable) |
-| **Slippage** | 5 bps (configurable) |
+| Component         | Specification                                            |
+| ----------------- | -------------------------------------------------------- |
+| **Symbol**        | ETH/USDT (spot)                                          |
+| **Timeframe**     | 4-hour candles                                           |
+| **Direction**     | Long only (no short, no leverage)                        |
+| **Entry**         | EMA(20) crosses above EMA(50) on close → enter next open |
+| **Exit**          | EMA(20) crosses below EMA(50) on close → exit next open  |
+| **Stop Loss**     | Entry − 2 × ATR(14) (fixed at entry)                     |
+| **Risk/Trade**    | 1% of current equity                                     |
+| **Position Size** | (0.01 × equity) / (entry − stop)                         |
+| **Pyramiding**    | None (single position)                                   |
+| **Fees**          | 0.1% taker (configurable)                                |
+| **Slippage**      | 5 bps (configurable)                                     |
 
 ### Equity Calculation
 
@@ -153,10 +163,10 @@ eth_4h_mvp/
 
 ## Data Sources
 
-| Mode | Source | Auth | Purpose |
-|------|--------|------|---------|
-| Backtest | `api.binance.com` | None (public) | Historical klines |
-| Live | `demo-api.binance.com` | Demo API key | Real-time klines, orders, account |
+| Mode     | Source                 | Auth          | Purpose                           |
+| -------- | ---------------------- | ------------- | --------------------------------- |
+| Backtest | `api.binance.com`      | None (public) | Historical klines                 |
+| Live     | `demo-api.binance.com` | Demo API key  | Real-time klines, orders, account |
 
 **Important**: Demo Mode prices/liquidity may differ from production. Balance can reset anytime via Binance UI.
 
@@ -165,7 +175,7 @@ eth_4h_mvp/
 Key settings in `config/settings.yaml`:
 
 ```yaml
-mode: "backtest"                    # backtest | live
+mode: "backtest" # backtest | live
 symbol: "ETHUSDT"
 interval: "4h"
 initial_capital: 10000.0
@@ -177,14 +187,14 @@ atr_multiplier: 2.0
 risk_per_trade_pct: 0.01
 
 backtest:
-  fee_rate: 0.001          # 0.1%
-  slippage_bps: 5          # 5 bps
+  fee_rate: 0.001 # 0.1%
+  slippage_bps: 5 # 5 bps
 
 live:
   alert_missing_candle_hours: 6
   reconciliation_tolerance: 0.0001
 
-storage_format: "parquet"   # parquet | csv | sqlite
+storage_format: "parquet" # parquet | csv | sqlite
 ```
 
 ## Monitoring & Logs
@@ -198,19 +208,65 @@ Log levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 ### Telegram Notifications (Optional)
 
-Receive real-time WARNING/ERROR/CRITICAL alerts in Telegram:
+Receive real-time WARNING/ERROR/CRITICAL alerts in Telegram.
 
-1. Create a bot via [@BotFather](https://t.me/BotFather), get the bot token
-2. Get your chat ID via [@userinfobot](https://t.me/userinfobot)
+#### Setup
+
+1. Create a bot via [@BotFather](https://t.me/BotFather):
+   - Send `/newbot` to @BotFather
+   - Follow prompts to name your bot
+   - Save the **bot token** (format: `123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`)
+2. Get your chat ID via [@userinfobot](https://t.me/userinfobot):
+   - Send any message to @userinfobot
+   - It replies with your numeric **chat ID**
 3. Add to `.env`:
    ```
    TELEGRAM__BOT_TOKEN=your_bot_token
    TELEGRAM__CHAT_ID=your_chat_id
    ```
 
-Only WARNING and above are sent (INFO logs like "Processing candle..." are filtered out to avoid spam). Failures are logged locally at DEBUG level and never interrupt the trading loop.
+Both are optional. If either is unset, Telegram notifications are disabled (no errors).
+
+#### Behavior
+
+- **Trigger**: Any log at WARNING level (30) or above
+- **Format**: `[LEVEL] logger_name: message`
+- **Delivery**: Best-effort via Telegram Bot API (HTTPS POST, 5s timeout)
+- **Failure handling**: Network/API failures logged locally at DEBUG level; never crash the trading loop
+- **No retries**: Failed deliveries are dropped silently (not critical path)
+
+#### Example Messages
+
+```
+[WARNING] src.live.runner: STOP LOSS TRIGGERED at 2850.42
+[ERROR] src.execution.reconciler: Failed to sync account from Demo Mode: BinanceAPIError(500, "Internal Server Error")
+[WARNING] src.live.runner: ALERT: No new candle received for 6 hours
+[CRITICAL] src.live.runner: Order failed: Insufficient balance
+```
+
+#### Testing
+
+```bash
+# With credentials set, trigger a warning
+python -c "
+from src.monitoring.logger import setup_logging
+from loguru import logger
+setup_logging()
+logger.warning('Test Telegram alert')
+"
+```
+
+Check your Telegram chat — message should arrive within seconds.
+
+#### Security Notes
+
+- Bot token grants send-only access to your chat
+- Store `.env` securely (already in `.gitignore`)
+- Do not share bot token publicly
+- Revoke token via @BotFather if compromised: `/revoke`
 
 ### Alerts (via logs)
+
 - Missing candles beyond threshold
 - Order rejections
 - Reconciliation mismatches
@@ -260,6 +316,7 @@ pytest
 ## Important Notes
 
 ⚠️ **Demo Mode Limitations**
+
 - Prices may not match production exactly
 - Balance resets possible at any time via Binance UI
 - Not a guarantee of live performance
@@ -268,12 +325,9 @@ pytest
 This is an educational/research MVP. No real funds at risk. Strategy is not optimized for profit.
 
 ⚠️ **Before Live Capital**
+
 - [ ] Define max drawdown kill-switch
 - [ ] Validate Demo Mode fee simulation
 - [ ] Confirm default virtual balance
 - [ ] Test funding rate filter (if added)
 - [ ] Run extended paper trading period
-
-## License
-
-MIT License - see LICENSE file for details.
