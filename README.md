@@ -312,22 +312,3 @@ pytest
 1. Create signal generator in `src/signal/`
 2. Implement `generate(candle, indicators, position) -> Signal | None`
 3. Wire into backtest engine and live runner
-
-## Important Notes
-
-⚠️ **Demo Mode Limitations**
-
-- Prices may not match production exactly
-- Balance resets possible at any time via Binance UI
-- Not a guarantee of live performance
-
-⚠️ **Not Financial Advice**
-This is an educational/research MVP. No real funds at risk. Strategy is not optimized for profit.
-
-⚠️ **Before Live Capital**
-
-- [ ] Define max drawdown kill-switch
-- [ ] Validate Demo Mode fee simulation
-- [ ] Confirm default virtual balance
-- [ ] Test funding rate filter (if added)
-- [ ] Run extended paper trading period
