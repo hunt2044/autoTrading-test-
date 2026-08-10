@@ -9,7 +9,7 @@ from src.core.enums import OrderSide, PositionSide, SignalAction
 from src.core.models import Account, Candle, Position, Signal, Trade
 from src.indicators import IndicatorCalculator
 from src.risk import RiskManager
-from src.signal import EmaCrossoverSignal
+from src.signal import SignalGenerator, create_signal_generator
 
 
 @dataclass(slots=True)
@@ -17,7 +17,7 @@ class BacktestState:
     account: Account
     position: Position
     indicators: IndicatorCalculator
-    signal_gen: EmaCrossoverSignal
+    signal_gen: SignalGenerator
     risk_manager: RiskManager
     trades: list[Trade] = field(default_factory=list)
     equity_curve: list[tuple] = field(default_factory=list)
@@ -43,7 +43,7 @@ class BacktestEngine:
             account=Account(total_equity=initial_capital, available_balance=initial_capital),
             position=Position(symbol=symbol),
             indicators=IndicatorCalculator(),
-            signal_gen=EmaCrossoverSignal(),
+            signal_gen=create_signal_generator(self.settings.strategy),
             risk_manager=RiskManager(),
         )
         self.state.account.positions[symbol] = self.state.position

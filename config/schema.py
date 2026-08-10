@@ -43,8 +43,9 @@ class TelegramConfig(BaseSettings):
 class Settings(BaseSettings):
     mode: Literal["backtest", "live"] = "backtest"
     symbol: str = "ETHUSDT"
-    interval: str = "4h"
+    interval: str = "1h"
     initial_capital: float = 10000.0
+    strategy: str = "ema_crossover"
 
     binance: BinanceConfig = Field(default_factory=BinanceConfig)
     backtest: BacktestConfig = Field(default_factory=BacktestConfig)

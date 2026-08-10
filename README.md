@@ -1,13 +1,13 @@
-# ETH 4H MVP Trading System
+# ETH 1H MVP Trading System
 
-Automated paper trading system for ETH/USDT on 4-hour timeframe using Binance Demo Mode.
+Automated paper trading system for ETH/USDT on 1-hour timeframe using Binance Demo Mode.
 
 > [!NOTE]
 > This is a vibe-coded project for learning purposes about CI/CD on cloud. Not recommended for production use.
 
 ## Features
 
-- **EMA Crossover Strategy**: EMA(20) / EMA(50) crossover on 4h candles
+- **EMA Crossover Strategy**: EMA(20) / EMA(50) crossover on 1h candles (configurable timeframe & strategy)
 - **Risk Management**: 1% risk per trade, ATR(14) × 2 stop-loss
 - **Paper Trading**: Binance Demo Mode (no real funds)
 - **Backtesting**: Historical data from Binance mainnet
@@ -57,7 +57,7 @@ poetry install
 ### Fetch Historical Data (for backtesting)
 
 ```bash
-# Fetch 3 years of 4h candles
+# Fetch 3 years of 1h candles
 python main.py fetch-history --years 3
 
 # Fetch with custom date range
@@ -93,7 +93,7 @@ python main.py live
 
 The runner:
 
-- Wakes up at each 4h candle close (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
+- Wakes up at each candle close based on configured interval (default 1h: 00:00, 01:00, 02:00... UTC; for 4h: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
 - Fetches the latest closed candle from Demo Mode
 - Generates signals, calculates position size, places orders
 - Reconciles local state with Demo Mode account
@@ -114,7 +114,7 @@ python main.py show-config
 ## Project Structure
 
 ```
-eth_4h_mvp/
+eth_1h_mvp/
 ├── config/
 │   ├── settings.yaml          # Main configuration
 │   └── schema.py              # Pydantic settings with YAML/env loading
@@ -122,7 +122,7 @@ eth_4h_mvp/
 │   ├── core/                  # Models, enums, config
 │   ├── data/                  # Binance client, candle storage
 │   ├── indicators/            # Incremental EMA, ATR
-│   ├── signal/                # EMA crossover logic
+│   ├── signal/                # Pluggable signal generators (EMA crossover, etc.)
 │   ├── risk/                  # Position sizing, stop-loss
 │   ├── execution/             # Order management, reconciliation
 │   ├── backtest/              # Event-driven backtest engine
@@ -144,7 +144,7 @@ eth_4h_mvp/
 | Component         | Specification                                            |
 | ----------------- | -------------------------------------------------------- |
 | **Symbol**        | ETH/USDT (spot)                                          |
-| **Timeframe**     | 4-hour candles                                           |
+| **Timeframe**     | 1-hour candles (configurable via `interval` in settings) |
 | **Direction**     | Long only (no short, no leverage)                        |
 | **Entry**         | EMA(20) crosses above EMA(50) on close → enter next open |
 | **Exit**          | EMA(20) crosses below EMA(50) on close → exit next open  |
@@ -177,8 +177,9 @@ Key settings in `config/settings.yaml`:
 ```yaml
 mode: "backtest" # backtest | live
 symbol: "ETHUSDT"
-interval: "4h"
+interval: "1h"
 initial_capital: 10000.0
+strategy: "ema_crossover"
 
 ema_short: 20
 ema_long: 50
@@ -196,6 +197,14 @@ live:
 
 storage_format: "parquet" # parquet | csv | sqlite
 ```
+
+### Strategy Selection
+
+The `strategy` setting selects the signal generator. Currently available:
+
+- `ema_crossover` (default) — EMA(20)/EMA(50) crossover
+
+Add new strategies by implementing the `SignalGenerator` protocol in `src/signal/` and registering them in `src/signal/__init__.py`.
 
 ## Monitoring & Logs
 

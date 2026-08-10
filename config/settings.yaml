@@ -3,8 +3,9 @@
 
 mode: "backtest"  # backtest | live
 symbol: "ETHUSDT"
-interval: "4h"
+interval: "1h"
 initial_capital: 10000.0  # USDT
+strategy: "ema_crossover"
 
 # Binance API Configuration
 binance:

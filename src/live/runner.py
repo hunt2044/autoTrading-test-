@@ -21,7 +21,7 @@ from src.execution import OrderManager, OrderResult, Reconciler
 from src.indicators import IndicatorCalculator
 from src.monitoring.logger import get_logger
 from src.risk import RiskManager
-from src.signal import EmaCrossoverSignal
+from src.signal import create_signal_generator
 
 logger = get_logger(__name__)
 
@@ -43,7 +43,7 @@ class LiveRunner:
         self.account: Account | None = None
         self.position: Position | None = None
         self.indicators: IndicatorCalculator | None = None
-        self.signal_gen: EmaCrossoverSignal | None = None
+        self.signal_gen = None
         self.risk_manager: RiskManager | None = None
 
         self.last_candle_time: datetime | None = None
@@ -69,7 +69,7 @@ class LiveRunner:
         self.account.positions[self.settings.symbol] = self.position
 
         self.indicators = IndicatorCalculator()
-        self.signal_gen = EmaCrossoverSignal()
+        self.signal_gen = create_signal_generator(self.settings.strategy)
         self.risk_manager = RiskManager()
 
         self._warmup_indicators()
@@ -80,7 +80,7 @@ class LiveRunner:
         logger.info("Warming up indicators with {} historical candles...", self.WARMUP_CANDLES)
         try:
             end_time = int(datetime.now(UTC).timestamp() * 1000)
-            start_time = end_time - (self.WARMUP_CANDLES * 4 * 60 * 60 * 1000)
+            start_time = end_time - (self.WARMUP_CANDLES * self._get_interval_hours() * 60 * 60 * 1000)
             
             candles = self.provider.fetch_historical(
                 self.settings.symbol,
@@ -205,16 +205,23 @@ class LiveRunner:
 
         self.order_manager.cleanup_filled_orders()
 
+    def _get_interval_hours(self) -> int:
+        interval = self.settings.interval
+        if interval.endswith("h"):
+            return int(interval.rstrip("h"))
+        return 4  # default fallback
+
     def _get_next_candle_close(self) -> datetime:
         now = datetime.now(UTC)
         current_hour = now.hour
-        next_4h = ((current_hour // 4) + 1) * 4
-        if next_4h >= 24:
-            next_4h = 0
+        interval_hours = self._get_interval_hours()
+        next_boundary = ((current_hour // interval_hours) + 1) * interval_hours
+        if next_boundary >= 24:
+            next_boundary = 0
             next_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
             next_day += timedelta(days=1)
             return next_day
-        return now.replace(hour=next_4h, minute=0, second=0, microsecond=0)
+        return now.replace(hour=next_boundary, minute=0, second=0, microsecond=0)
 
     def _process_candle(self, candle: Candle) -> None:
         logger.info(
