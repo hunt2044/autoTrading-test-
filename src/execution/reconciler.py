@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from src.core.models import Account, Position
-from src.data.binance_client import BinanceClient
+from src.data.binance_client import BinanceClient, unwrap_error
 from src.monitoring.logger import get_logger
 
 
@@ -31,7 +31,7 @@ class Reconciler:
         except Exception as e:
             return ReconciliationResult(
                 matched=False,
-                discrepancies=[f"Failed to fetch remote account: {e}"],
+                discrepancies=[f"Failed to fetch remote account: {unwrap_error(e)}"],
                 account=local_account,
             )
 
@@ -123,6 +123,6 @@ class Reconciler:
                         local_pos.side = remote_pos.side
 
             except Exception as e:
-                logger.warning("Failed to sync account from Demo Mode: {}", e)
+                logger.warning("Failed to sync account from Demo Mode: {}", unwrap_error(e))
 
         return local_account

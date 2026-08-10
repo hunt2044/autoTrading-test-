@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from src.core.enums import OrderSide, OrderStatus, OrderType
 from src.core.models import Order
-from src.data.binance_client import BinanceClient
+from src.data.binance_client import BinanceClient, unwrap_error
 
 
 @dataclass(slots=True)
@@ -58,7 +58,7 @@ class OrderManager:
                     status=OrderStatus.REJECTED,
                 ),
                 success=False,
-                error=str(e),
+                error=unwrap_error(e),
             )
 
     def get_order_status(self, order_id: str) -> Order | None:
@@ -96,7 +96,7 @@ class OrderManager:
             self.pending_orders[order_id] = cancelled
             return OrderResult(order=cancelled, success=True)
         except Exception as e:
-            return OrderResult(order=order, success=False, error=str(e))
+            return OrderResult(order=order, success=False, error=unwrap_error(e))
 
     def get_open_orders(self, symbol: str | None = None) -> list[Order]:
         try:

@@ -16,6 +16,7 @@ from src.data import (
     create_data_provider,
     create_demo_client,
     create_store,
+    unwrap_error,
 )
 from src.execution import OrderManager, OrderResult, Reconciler
 from src.indicators import IndicatorCalculator
@@ -114,7 +115,7 @@ class LiveRunner:
                 logger.info("Warmed up indicators with {} candles", len(candles))
                 
         except Exception as e:
-            logger.warning("Indicator warm-up failed: {}", e)
+            logger.warning("Indicator warm-up failed: {}", unwrap_error(e))
 
     def run(self) -> None:
         self.initialize()
@@ -139,7 +140,7 @@ class LiveRunner:
                 logger.info("Shutdown signal received")
                 break
             except Exception as e:
-                logger.error("Error in main loop: {}", e)
+                logger.error("Error in main loop: {}", unwrap_error(e))
                 time.sleep(60)
 
         self.shutdown()
@@ -161,7 +162,7 @@ class LiveRunner:
                 self.position.quantity,
             )
         except Exception as e:
-            logger.warning("Failed to sync initial state: {}", e)
+            logger.warning("Failed to sync initial state: {}", unwrap_error(e))
 
     def _run_iteration(self) -> None:
         next_candle_close = self._get_next_candle_close()

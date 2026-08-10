@@ -3,6 +3,7 @@ from src.data.binance_client import (
     BinanceClient,
     create_demo_client,
     create_mainnet_client,
+    unwrap_error,
 )
 from src.data.candle_store import CandleStore, create_store
 from src.data.provider import (
@@ -25,4 +26,5 @@ __all__ = [
     "LiveDataProvider",
     "create_data_provider",
     "DataSource",
+    "unwrap_error",
 ]

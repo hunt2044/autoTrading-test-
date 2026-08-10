@@ -12,7 +12,23 @@ from tenacity import (
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
+    RetryError,
 )
+
+
+def unwrap_error(e: Exception) -> str:
+    """Return the real underlying error message, unwrapping tenacity's RetryError
+    if present, so callers see the actual BinanceAPIError instead of the opaque
+    RetryError wrapper."""
+    if isinstance(e, RetryError):
+        try:
+            inner = e.last_attempt.exception()
+            if inner is not None:
+                return str(inner)
+        except Exception:
+            pass
+    return str(e)
+
 
 from config.schema import BinanceConfig, get_settings
 from src.core.enums import DataSource, OrderSide, OrderStatus, OrderType
