@@ -40,6 +40,19 @@ class TelegramConfig(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="TELEGRAM_")
 
 
+class MomentumTrendConfig(BaseSettings):
+    ema_short: int = 20
+    ema_long: int = 50
+    rsi_period: int = 14
+    rsi_pullback_low: int = 45
+    rsi_pullback_high: int = 55
+    volume_avg_period: int = 20
+    swing_high_period: int = 20
+    volume_breakout_multiplier: float = 1.5
+
+    model_config = SettingsConfigDict(env_prefix="MOMENTUM_TREND_")
+
+
 class Settings(BaseSettings):
     mode: Literal["backtest", "live"] = "backtest"
     symbol: str = "ETHUSDT"
@@ -51,12 +64,17 @@ class Settings(BaseSettings):
     backtest: BacktestConfig = Field(default_factory=BacktestConfig)
     live: LiveConfig = Field(default_factory=LiveConfig)
     telegram: TelegramConfig = Field(default_factory=TelegramConfig)
+    momentum_trend: MomentumTrendConfig = Field(default_factory=MomentumTrendConfig)
 
     ema_short: int = 20
     ema_long: int = 50
     atr_period: int = 14
     atr_multiplier: float = 2.0
     risk_per_trade_pct: float = 0.01
+
+    rsi_period: int = 14
+    volume_avg_period: int = 20
+    swing_high_period: int = 20
 
     data_dir: str = "./data"
     storage_format: Literal["parquet", "csv", "sqlite"] = "parquet"

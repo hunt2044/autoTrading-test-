@@ -64,6 +64,10 @@ class Indicators:
     atr: Decimal | None = None
     prev_ema_short: Decimal | None = None
     prev_ema_long: Decimal | None = None
+    rsi: Decimal | None = None
+    prev_rsi: Decimal | None = None
+    volume_avg_20: Decimal | None = None
+    swing_high_20: Decimal | None = None
 
 
 @dataclass(slots=True)

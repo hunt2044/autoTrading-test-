@@ -1,11 +1,11 @@
-# ETH 4H MVP Trading System Configuration
+# ETH 1H MVP Trading System Configuration
 # Copy to .env for secrets (API keys)
 
 mode: "backtest"  # backtest | live
 symbol: "ETHUSDT"
 interval: "1h"
 initial_capital: 10000.0  # USDT
-strategy: "ema_crossover"
+strategy: "momentum_trend_1h"
 
 # Binance API Configuration
 binance:
@@ -15,12 +15,28 @@ binance:
   api_secret: ""  # Set via BINANCE_DEMO_API_SECRET env var
   recv_window: 5000
 
-# Strategy Parameters
+# Strategy Parameters (shared base for ema_crossover)
 ema_short: 20
 ema_long: 50
 atr_period: 14
-atr_multiplier: 2.0
+atr_multiplier: 2.5
 risk_per_trade_pct: 0.01
+
+# Momentum Trend Strategy (separate config section)
+momentum_trend:
+  ema_short: 20
+  ema_long: 50
+  rsi_period: 14
+  rsi_pullback_low: 45
+  rsi_pullback_high: 55
+  volume_avg_period: 20
+  swing_high_period: 20
+  volume_breakout_multiplier: 1.5
+
+# Additional indicator periods (used by IndicatorCalculator for all strategies)
+rsi_period: 14
+volume_avg_period: 20
+swing_high_period: 20
 
 # Backtest Configuration
 backtest:
