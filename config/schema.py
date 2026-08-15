@@ -49,6 +49,7 @@ class MomentumTrendConfig(BaseSettings):
     volume_avg_period: int = 20
     swing_high_period: int = 20
     volume_breakout_multiplier: float = 1.5
+    atr_multiplier: float = 2.5
 
     model_config = SettingsConfigDict(env_prefix="MOMENTUM_TREND_")
 

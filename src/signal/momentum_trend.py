@@ -11,7 +11,7 @@ class MomentumTrendSignal:
         mt = settings.momentum_trend if hasattr(settings, 'momentum_trend') else None
         self.rsi_pullback_low = mt.rsi_pullback_low if mt and hasattr(mt, 'rsi_pullback_low') else 45
         self.rsi_pullback_high = mt.rsi_pullback_high if mt and hasattr(mt, 'rsi_pullback_high') else 55
-        self.volume_breakout_multiplier = mt.volume_breakout_multiplier if mt and hasattr(mt, 'volume_breakout_multiplier') else Decimal("1.5")
+        self.volume_breakout_multiplier = Decimal(str(mt.volume_breakout_multiplier)) if mt and hasattr(mt, 'volume_breakout_multiplier') else Decimal("1.5")
 
     def generate(
         self,

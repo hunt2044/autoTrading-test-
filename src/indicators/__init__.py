@@ -22,9 +22,10 @@ class IndicatorState:
 class IndicatorCalculator:
     def __init__(self):
         settings = get_settings()
+        ema_short, ema_long = self._get_ema_periods(settings)
         self.state = IndicatorState(
-            ema_short=EMA(settings.ema_short),
-            ema_long=EMA(settings.ema_long),
+            ema_short=EMA(ema_short),
+            ema_long=EMA(ema_long),
             atr=ATR(settings.atr_period),
             rsi=RSI(settings.rsi_period if hasattr(settings, 'rsi_period') else 14),
             volume_avg_20=RollingAverage(settings.volume_avg_period if hasattr(settings, 'volume_avg_period') else 20),
@@ -32,17 +33,25 @@ class IndicatorCalculator:
         )
         self.settings = settings
 
+    def _get_ema_periods(self, settings) -> tuple[int, int]:
+        if settings.strategy == "momentum_trend_1h":
+            return settings.momentum_trend.ema_short, settings.momentum_trend.ema_long
+        return settings.ema_short, settings.ema_long
+
     def process_candle(self, candle: Candle) -> Indicators:
         self.state.prev_ema_short = self.state.ema_short.get()
         self.state.prev_ema_long = self.state.ema_long.get()
         self.state.prev_rsi = self.state.rsi.get()
 
+        volume_avg_val = self.state.volume_avg_20.get()
+        swing_high_val = self.state.swing_high_20.get()
+
         ema_short_val = self.state.ema_short.update(candle.close)
         ema_long_val = self.state.ema_long.update(candle.close)
         atr_val = self.state.atr.update(candle.high, candle.low, candle.close)
         rsi_val = self.state.rsi.update(candle.close)
-        volume_avg_val = self.state.volume_avg_20.update(candle.volume)
-        swing_high_val = self.state.swing_high_20.update(candle.high)
+        self.state.volume_avg_20.update(candle.volume)
+        self.state.swing_high_20.update(candle.high)
 
         return Indicators(
             ema_short=ema_short_val,

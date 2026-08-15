@@ -16,7 +16,12 @@ class RiskManager:
     def __init__(self):
         settings = get_settings()
         self.risk_per_trade_pct = Decimal(str(settings.risk_per_trade_pct))
-        self.atr_multiplier = Decimal(str(settings.atr_multiplier))
+        self.atr_multiplier = self._get_atr_multiplier(settings)
+
+    def _get_atr_multiplier(self, settings) -> Decimal:
+        if settings.strategy == "momentum_trend_1h":
+            return Decimal(str(settings.momentum_trend.atr_multiplier))
+        return Decimal(str(settings.atr_multiplier))
 
     def calculate_position_size(
         self,
