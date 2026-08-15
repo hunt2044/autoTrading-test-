@@ -19,7 +19,7 @@ binance:
 ema_short: 20
 ema_long: 50
 atr_period: 14
-atr_multiplier: 2.5
+atr_multiplier: 2.0
 risk_per_trade_pct: 0.01
 
 # Momentum Trend Strategy (separate config section)
