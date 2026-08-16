@@ -24,6 +24,7 @@ class BacktestReporter:
         logger.info(f"Profit Factor:    {metrics['profit_factor']:.2f}")
         logger.info(f"Max Drawdown:     {metrics['max_drawdown'] * 100:.2f}%")
         logger.info(f"Sharpe Ratio:     {metrics['sharpe_ratio']:.2f}")
+        logger.info(f"Max Position Size: {metrics['max_position_size_ratio'] * 100:.2f}% of equity")
         logger.info("=" * 50)
 
     @staticmethod

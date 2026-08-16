@@ -23,6 +23,7 @@ class BacktestState:
     equity_curve: list[tuple] = field(default_factory=list)
     pending_stop_loss: Decimal | None = None
     pending_atr: Decimal | None = None
+    max_position_size_ratio: Decimal = Decimal("0")
 
 
 class BacktestEngine:
@@ -125,6 +126,12 @@ class BacktestEngine:
             position_value = risk_params.quantity * entry_price
             commission = position_value * self.fee_rate
             self.state.account.available_balance -= position_value + commission
+
+            # Track max position size ratio
+            if self.state.account.total_equity > Decimal("0"):
+                position_size_ratio = position_value / self.state.account.total_equity
+                if position_size_ratio > self.state.max_position_size_ratio:
+                    self.state.max_position_size_ratio = position_size_ratio
 
         elif (
             signal.action == SignalAction.EXIT_LONG
@@ -256,6 +263,7 @@ class BacktestEngine:
             ),
             "max_drawdown": float(max_dd),
             "sharpe_ratio": sharpe,
+            "max_position_size_ratio": float(self.state.max_position_size_ratio),
         }
 
     def _empty_result(self) -> dict[str, Any]:
