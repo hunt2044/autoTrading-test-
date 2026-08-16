@@ -21,7 +21,7 @@ ema_long: 50
 atr_period: 14
 atr_multiplier: 2.0
 risk_per_trade_pct: 0.01
-max_position_pct_of_equity: 0.20
+atr_floor_pct: 0.03
 
 # Momentum Trend Strategy (separate config section)
 momentum_trend:

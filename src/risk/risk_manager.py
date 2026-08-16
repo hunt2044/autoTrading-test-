@@ -20,7 +20,7 @@ class RiskManager:
     def __init__(self):
         settings = get_settings()
         self.risk_per_trade_pct = Decimal(str(settings.risk_per_trade_pct))
-        self.max_position_pct_of_equity = Decimal(str(settings.max_position_pct_of_equity))
+        self.atr_floor_pct = Decimal(str(settings.atr_floor_pct))
         self.atr_multiplier = self._get_atr_multiplier(settings)
 
     def _get_atr_multiplier(self, settings) -> Decimal:
@@ -38,7 +38,16 @@ class RiskManager:
         if indicators.atr is None:
             raise ValueError("ATR not available for risk calculation")
 
-        stop_loss = entry_price - (self.atr_multiplier * indicators.atr)
+        # Apply ATR floor: use max of real ATR and price-based floor
+        min_atr = entry_price * self.atr_floor_pct
+        effective_atr = max(indicators.atr, min_atr)
+        if effective_atr > indicators.atr:
+            logger.info(
+                "ATR floor applied: raw atr={} below floor {} ({:.2%} of price {}), using floor",
+                indicators.atr, min_atr, self.atr_floor_pct, entry_price,
+            )
+
+        stop_loss = entry_price - (self.atr_multiplier * effective_atr)
 
         if stop_loss >= entry_price:
             raise ValueError("Invalid stop loss: stop >= entry")
@@ -48,22 +57,6 @@ class RiskManager:
         raw_quantity = risk_amount / risk_per_unit
 
         quantity = self._round_down_to_precision(raw_quantity)
-
-        # Reject trade if risk-based notional would exceed max fraction of available balance
-        if available_balance is not None and available_balance > Decimal("0"):
-            max_position_notional = available_balance * self.max_position_pct_of_equity
-            notional = quantity * entry_price
-            if notional > max_position_notional:
-                logger.warning(
-                    "Signal rejected: risk-based position size would use {:.1%} of "
-                    "available balance (notional={}, limit={:.1%} = {}), atr={}",
-                    notional / available_balance,
-                    notional,
-                    self.max_position_pct_of_equity,
-                    max_position_notional,
-                    indicators.atr,
-                )
-                raise ValueError("Position size exceeds max allowed fraction of equity")
 
         if quantity <= 0:
             raise ValueError("Calculated quantity is zero or negative")
