@@ -14,13 +14,13 @@ class RiskParams:
     quantity: Decimal
     stop_loss: Decimal
     risk_amount: Decimal
-    capped_by_balance: bool = False
 
 
 class RiskManager:
     def __init__(self):
         settings = get_settings()
         self.risk_per_trade_pct = Decimal(str(settings.risk_per_trade_pct))
+        self.max_position_pct_of_equity = Decimal(str(settings.max_position_pct_of_equity))
         self.atr_multiplier = self._get_atr_multiplier(settings)
 
     def _get_atr_multiplier(self, settings) -> Decimal:
@@ -49,19 +49,21 @@ class RiskManager:
 
         quantity = self._round_down_to_precision(raw_quantity)
 
-        # Cap quantity by available balance (with 5% safety margin for fees/slippage)
-        capped = False
+        # Reject trade if risk-based notional would exceed max fraction of available balance
         if available_balance is not None and available_balance > Decimal("0"):
-            max_notional = available_balance * Decimal("0.95")
-            max_qty = self._round_down_to_precision(max_notional / entry_price)
-            if quantity > max_qty:
-                logger.info(
-                    "Position size capped by available balance: risk-based qty {} -> {} "
-                    "(ATR-based size would exceed available capital, atr_multiplier={}, atr={})",
-                    quantity, max_qty, self.atr_multiplier, indicators.atr
+            max_position_notional = available_balance * self.max_position_pct_of_equity
+            notional = quantity * entry_price
+            if notional > max_position_notional:
+                logger.warning(
+                    "Signal rejected: risk-based position size would use {:.1%} of "
+                    "available balance (notional={}, limit={:.1%} = {}), atr={}",
+                    notional / available_balance,
+                    notional,
+                    self.max_position_pct_of_equity,
+                    max_position_notional,
+                    indicators.atr,
                 )
-                quantity = max_qty
-                capped = True
+                raise ValueError("Position size exceeds max allowed fraction of equity")
 
         if quantity <= 0:
             raise ValueError("Calculated quantity is zero or negative")
@@ -70,7 +72,6 @@ class RiskManager:
             quantity=quantity,
             stop_loss=stop_loss,
             risk_amount=risk_amount,
-            capped_by_balance=capped,
         )
 
     def _round_down_to_precision(self, value: Decimal, precision: int = 6) -> Decimal:

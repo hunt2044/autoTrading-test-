@@ -72,6 +72,7 @@ class Settings(BaseSettings):
     atr_period: int = 14
     atr_multiplier: float = 2.0
     risk_per_trade_pct: float = 0.01
+    max_position_pct_of_equity: float = 0.20
 
     rsi_period: int = 14
     volume_avg_period: int = 20
@@ -113,6 +114,13 @@ class Settings(BaseSettings):
     def validate_atr_mult(cls, v: float) -> float:
         if v <= 0:
             raise ValueError("atr_multiplier must be positive")
+        return v
+
+    @field_validator("max_position_pct_of_equity")
+    @classmethod
+    def validate_max_position_pct(cls, v: float) -> float:
+        if not 0 < v <= 1:
+            raise ValueError("max_position_pct_of_equity must be between 0 and 1")
         return v
 
 
