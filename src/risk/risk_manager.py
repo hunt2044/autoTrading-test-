@@ -3,6 +3,10 @@ from decimal import ROUND_DOWN, Decimal
 
 from config.schema import get_settings
 from src.core.models import Indicators
+from src.monitoring.logger import get_logger
+
+
+logger = get_logger(__name__)
 
 
 @dataclass(slots=True)
@@ -10,6 +14,7 @@ class RiskParams:
     quantity: Decimal
     stop_loss: Decimal
     risk_amount: Decimal
+    capped_by_balance: bool = False
 
 
 class RiskManager:
@@ -28,6 +33,7 @@ class RiskManager:
         equity: Decimal,
         entry_price: Decimal,
         indicators: Indicators,
+        available_balance: Decimal | None = None,
     ) -> RiskParams:
         if indicators.atr is None:
             raise ValueError("ATR not available for risk calculation")
@@ -43,6 +49,20 @@ class RiskManager:
 
         quantity = self._round_down_to_precision(raw_quantity)
 
+        # Cap quantity by available balance (with 5% safety margin for fees/slippage)
+        capped = False
+        if available_balance is not None and available_balance > Decimal("0"):
+            max_notional = available_balance * Decimal("0.95")
+            max_qty = self._round_down_to_precision(max_notional / entry_price)
+            if quantity > max_qty:
+                logger.info(
+                    "Position size capped by available balance: risk-based qty {} -> {} "
+                    "(ATR-based size would exceed available capital, atr_multiplier={}, atr={})",
+                    quantity, max_qty, self.atr_multiplier, indicators.atr
+                )
+                quantity = max_qty
+                capped = True
+
         if quantity <= 0:
             raise ValueError("Calculated quantity is zero or negative")
 
@@ -50,6 +70,7 @@ class RiskManager:
             quantity=quantity,
             stop_loss=stop_loss,
             risk_amount=risk_amount,
+            capped_by_balance=capped,
         )
 
     def _round_down_to_precision(self, value: Decimal, precision: int = 6) -> Decimal:

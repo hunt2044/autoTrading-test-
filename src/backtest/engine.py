@@ -109,6 +109,7 @@ class BacktestEngine:
                     self.state.account.total_equity,
                     entry_price,
                     signal.indicators,
+                    self.state.account.available_balance,
                 )
             except ValueError:
                 return

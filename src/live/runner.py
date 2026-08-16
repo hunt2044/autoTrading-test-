@@ -284,6 +284,7 @@ class LiveRunner:
                 self.account.total_equity,
                 signal.price,
                 signal.indicators,
+                self.account.available_balance,
             )
         except ValueError as e:
             logger.error("Risk calculation failed: {}", e)
