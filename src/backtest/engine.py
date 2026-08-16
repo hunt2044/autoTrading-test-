@@ -38,6 +38,7 @@ class BacktestEngine:
         self.fee_rate = fee_rate
         self.slippage = Decimal(slippage_bps) / Decimal(10000)
         self.settings = get_settings()
+        self._insolvent = False
 
         self.state = BacktestState(
             account=Account(total_equity=initial_capital, available_balance=initial_capital),
@@ -53,6 +54,8 @@ class BacktestEngine:
             return self._empty_result()
 
         for i, candle in enumerate(candles):
+            if self._insolvent:
+                break
             self._process_candle(candle, i, candles)
 
         self._finalize()
@@ -67,6 +70,7 @@ class BacktestEngine:
             )
             / self.initial_capital,
             "metrics": self._calculate_metrics(),
+            "halted_due_to_insolvency": self._insolvent,
         }
 
     def _process_candle(self, candle: Candle, idx: int, all_candles: list[Candle]) -> None:
@@ -88,6 +92,9 @@ class BacktestEngine:
         idx: int,
         all_candles: list[Candle],
     ) -> None:
+        if self._check_insolvency():
+            return
+
         if (
             signal.action == SignalAction.ENTRY_LONG
             and self.state.position.side == PositionSide.FLAT
@@ -186,7 +193,23 @@ class BacktestEngine:
             equity = self.state.account.available_balance
 
         self.state.account.total_equity = equity
-        self.state.equity_curve.append((candle.timestamp, equity))
+        
+        if equity <= Decimal("0") and not self._insolvent:
+            self._insolvent = True
+            from src.monitoring.logger import get_logger
+            logger = get_logger(__name__)
+            logger.critical(
+                "Account insolvent (equity <= 0) at {} (equity: {}), halting backtest",
+                candle.timestamp,
+                equity,
+            )
+        
+        if not self._insolvent:
+            self.state.equity_curve.append((candle.timestamp, equity))
+
+    def _check_insolvency(self) -> bool:
+        """Check if account is insolvent."""
+        return self._insolvent
 
     def _finalize(self) -> None:
         if self.state.position.side == PositionSide.LONG and self.state.position.quantity > 0:

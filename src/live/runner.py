@@ -165,6 +165,11 @@ class LiveRunner:
             logger.warning("Failed to sync initial state: {}", unwrap_error(e))
 
     def _run_iteration(self) -> None:
+        if self._check_insolvency():
+            logger.critical("Account insolvent, stopping live runner")
+            self.stop()
+            return
+
         next_candle_close = self._get_next_candle_close()
         now = datetime.now(UTC)
 
@@ -256,7 +261,20 @@ class LiveRunner:
 
         self._log_status(candle, indicators)
 
+    def _check_insolvency(self) -> bool:
+        """Check if account equity has dropped to zero or below. Returns True if insolvent."""
+        if self.account and self.account.total_equity <= Decimal("0"):
+            logger.critical(
+                "Account insolvent (equity <= 0) at {:.2f}, halting new entries",
+                self.account.total_equity,
+            )
+            return True
+        return False
+
     def _execute_entry(self, signal: Signal, candle: Candle) -> None:
+        if self._check_insolvency():
+            return
+
         if self.position.side != PositionSide.FLAT:
             logger.warning("Already in position, skipping entry")
             return

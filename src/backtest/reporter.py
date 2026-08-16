@@ -14,6 +14,8 @@ class BacktestReporter:
         logger.info(f"Initial Capital:  {result.get('initial_capital', 0):,.2f} USDT")
         logger.info(f"Final Equity:     {result['final_equity']:,.2f} USDT")
         logger.info(f"Total Return:     {result['total_return'] * 100:.2f}%")
+        if result.get("halted_due_to_insolvency"):
+            logger.warning("BACKTEST HALTED: Account became insolvent (equity <= 0) before completing all candles")
         logger.info("-" * 50)
         logger.info(f"Total Trades:     {metrics['total_trades']}")
         logger.info(f"Win Rate:         {metrics['win_rate'] * 100:.2f}%")
