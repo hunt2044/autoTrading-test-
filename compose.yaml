@@ -1,0 +1,44 @@
+# docker-compose.yaml - Optimized for production
+services:
+  eth-4h-mvp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    env_file:
+      - .env
+    volumes:
+      - eth4h-data:/app/data
+      - eth4h-logs:/app/logs
+      - eth4h-results:/app/results
+    environment:
+      - PYTHONUNBUFFERED=1
+      - TZ=UTC
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "python", "-c", "import sys; sys.exit(0)"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  eth4h-data:
+    driver: local
+  eth4h-logs:
+    driver: local
+  eth4h-results:
+    driver: local
