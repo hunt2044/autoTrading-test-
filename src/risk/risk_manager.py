@@ -63,9 +63,9 @@ class RiskManager:
 
         quantity = self._round_down_to_precision(raw_quantity)
 
-        # Cap quantity by available balance (95% margin for fees/slippage)
+        # Cap quantity by available balance (20% margin for fees/slippage)
         if available_balance is not None and available_balance > Decimal("0"):
-            max_affordable_notional = available_balance * Decimal("0.95")
+            max_affordable_notional = available_balance * Decimal("0.20")
             max_affordable_qty = self._round_down_to_precision(max_affordable_notional / entry_price)
             if quantity > max_affordable_qty:
                 logger.warning(
