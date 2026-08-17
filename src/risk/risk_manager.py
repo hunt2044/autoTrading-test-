@@ -20,7 +20,6 @@ class RiskManager:
     def __init__(self):
         settings = get_settings()
         self.risk_per_trade_pct = self._get_risk_per_trade_pct(settings)
-        self.max_position_pct_of_equity = Decimal(str(settings.max_position_pct_of_equity))
         self.atr_floor_pct = Decimal(str(settings.atr_floor_pct))
         self.atr_multiplier = self._get_atr_multiplier(settings)
 
@@ -75,22 +74,6 @@ class RiskManager:
                     quantity, max_affordable_qty, quantity * entry_price, available_balance,
                 )
                 quantity = max_affordable_qty
-
-        # Cap position size by max fraction of available balance (safety net)
-        if available_balance is not None and available_balance > Decimal("0"):
-            max_position_notional = available_balance * self.max_position_pct_of_equity
-            notional = quantity * entry_price
-            if notional > max_position_notional:
-                logger.warning(
-                    "Signal rejected: risk-based position size would use {:.1%} of "
-                    "available balance (notional={}, limit={:.1%} = {}), atr={}",
-                    notional / available_balance,
-                    notional,
-                    self.max_position_pct_of_equity,
-                    max_position_notional,
-                    indicators.atr,
-                )
-                raise ValueError("Position size exceeds max allowed fraction of equity")
 
         if quantity <= 0:
             raise ValueError("Calculated quantity is zero or negative")
